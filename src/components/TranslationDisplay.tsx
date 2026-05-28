@@ -1,10 +1,38 @@
+import { useState } from "react";
+
 interface Props {
   loading: boolean;
   text: string;
   error: string | null;
 }
 
+function CopyIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5" y="5" width="9" height="9" rx="1.5" />
+      <path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2H3.5A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="2.5,8.5 6,12 13.5,4" />
+    </svg>
+  );
+}
+
 export default function TranslationDisplay({ loading, text, error }: Props) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }
+
   if (loading) {
     return (
       <div className="translation-body center">
@@ -30,7 +58,15 @@ export default function TranslationDisplay({ loading, text, error }: Props) {
   }
 
   return (
-    <div className="translation-body">
+    <div className="translation-body translation-body--has-text">
+      <button
+        className={`copy-btn icon-btn${copied ? " copy-btn--done" : ""}`}
+        onClick={handleCopy}
+        title={copied ? "Copied!" : "Copy"}
+        aria-label="Copy translation"
+      >
+        {copied ? <CheckIcon /> : <CopyIcon />}
+      </button>
       <pre className="translation-text">{text}</pre>
     </div>
   );
