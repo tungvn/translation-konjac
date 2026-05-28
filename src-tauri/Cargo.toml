@@ -24,6 +24,7 @@ image = { version = "0.25", default-features = false, features = ["jpeg", "png"]
 toml = "0.8"
 dirs = "5"
 thiserror = "2"
+keyring = "3"
 
 
 [target.'cfg(target_os = "macos")'.dependencies]

@@ -1,7 +1,7 @@
 {
   "productName": "Konjac",
   "version": "0.1.0",
-  "identifier": "com.konjac.app",
+  "identifier": "com.ordinarist.konjac-translation",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
