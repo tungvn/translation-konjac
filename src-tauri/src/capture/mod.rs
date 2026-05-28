@@ -21,7 +21,7 @@ pub enum CaptureError {
 }
 
 #[cfg(target_os = "macos")]
-mod macos;
+pub mod macos;
 #[cfg(target_os = "windows")]
 pub mod windows;
 
@@ -36,11 +36,33 @@ pub fn capture_below_window(rect: CaptureRect, window_id: u32) -> Result<Dynamic
     Err(CaptureError::Platform("unsupported platform".to_string()))
 }
 
-use crate::{
-    config::AppConfig,
-    diff,
-    translate::{TranslateEngine, TranslateError},
-};
+/// Captures the region beneath the overlay window, excluding the toolbar.
+pub fn capture_window_region(window: &tauri::WebviewWindow) -> Result<DynamicImage, CaptureError> {
+    let scale = window.scale_factor().unwrap_or(1.0);
+    let pos = window
+        .outer_position()
+        .map_err(|e| CaptureError::Platform(e.to_string()))?;
+    let size = window
+        .outer_size()
+        .map_err(|e| CaptureError::Platform(e.to_string()))?;
+
+    let lx = (pos.x as f64 / scale) as i32;
+    let ly = (pos.y as f64 / scale) as i32;
+    let lw = (size.width as f64 / scale) as u32;
+    let lh = (size.height as f64 / scale) as u32;
+
+    let toolbar_pt = 32_u32;
+    let rect = CaptureRect {
+        x: lx,
+        y: ly + toolbar_pt as i32,
+        width: lw,
+        height: lh.saturating_sub(toolbar_pt),
+    };
+
+    capture_below_window(rect, 0)
+}
+
+use crate::{config::AppConfig, diff};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration};
@@ -49,14 +71,18 @@ use tokio_util::sync::CancellationToken;
 pub struct AppState {
     pub config: AppConfig,
     pub is_capturing: bool,
+    pub is_stale: bool,
+    pub inflight_cancel: Option<CancellationToken>,
 }
 
+/// Monitors for capture changes and emits `capture-stale` when the content
+/// under the window differs from the previous check. Does NOT auto-translate.
 pub async fn run_capture_loop(app: tauri::AppHandle, state: Arc<Mutex<AppState>>) {
     let mut prev_image: Option<DynamicImage> = None;
-    let mut inflight_cancel: Option<CancellationToken> = None;
+    let mut prev_rect: Option<(i32, i32, u32, u32)> = None;
 
     loop {
-        sleep(Duration::from_millis(500)).await;
+        sleep(Duration::from_millis(600)).await;
 
         let (is_capturing, config) = {
             let s = state.lock().await;
@@ -64,6 +90,8 @@ pub async fn run_capture_loop(app: tauri::AppHandle, state: Arc<Mutex<AppState>>
         };
 
         if !is_capturing {
+            prev_image = None;
+            prev_rect = None;
             continue;
         }
 
@@ -72,6 +100,7 @@ pub async fn run_capture_loop(app: tauri::AppHandle, state: Arc<Mutex<AppState>>
             None => continue,
         };
 
+        let scale = window.scale_factor().unwrap_or(1.0);
         let pos = match window.outer_position() {
             Ok(p) => p,
             Err(_) => continue,
@@ -81,67 +110,53 @@ pub async fn run_capture_loop(app: tauri::AppHandle, state: Arc<Mutex<AppState>>
             Err(_) => continue,
         };
 
+        let rect_key = (pos.x, pos.y, size.width, size.height);
+        let rect_changed = prev_rect.map_or(true, |r| r != rect_key);
+        prev_rect = Some(rect_key);
+
+        let toolbar_pt = 32_u32;
+        let lx = (pos.x as f64 / scale) as i32;
+        let ly = (pos.y as f64 / scale) as i32;
+        let lw = (size.width as f64 / scale) as u32;
+        let lh = (size.height as f64 / scale) as u32;
         let rect = CaptureRect {
-            x: pos.x,
-            y: pos.y,
-            width: size.width,
-            height: size.height,
+            x: lx,
+            y: ly + toolbar_pt as i32,
+            width: lw,
+            height: lh.saturating_sub(toolbar_pt),
         };
 
-        #[cfg(target_os = "macos")]
-        let window_id = {
-            use objc::{msg_send, runtime::Object, sel, sel_impl};
-            let ns_win = match window.ns_window() {
-                Ok(ptr) => ptr as *const Object,
-                Err(_) => continue,
-            };
-            let n: i32 = unsafe { msg_send![ns_win, windowNumber] };
-            n as u32
-        };
-
-        #[cfg(not(target_os = "macos"))]
-        let window_id: u32 = 0;
-
-        let current = match capture_below_window(rect, window_id) {
+        let current = match capture_below_window(rect, 0) {
             Ok(img) => img,
-            Err(_) => continue,
-        };
-
-        if let Some(ref prev) = prev_image {
-            let score = diff::compute_diff_score(prev, &current);
-            if !diff::is_changed(score, config.delta_threshold) {
+            Err(_) => {
+                prev_image = None;
                 continue;
             }
-        }
+        };
 
-        prev_image = Some(current.clone());
-
-        if let Some(token) = inflight_cancel.take() {
-            token.cancel();
-        }
-
-        let token = CancellationToken::new();
-        inflight_cancel = Some(token.clone());
-
-        let app_clone = app.clone();
-        let lang = config.target_language.clone();
-        let engine = TranslateEngine::new(
-            config.gateway_url.clone(),
-            config.model.clone(),
-            config.api_key.clone(),
-        );
-
-        tauri::async_runtime::spawn(async move {
-            let _ = app_clone.emit("translation-loading", ());
-            match engine.translate(&current, &lang, token).await {
-                Ok(text) => {
-                    let _ = app_clone.emit("translation-updated", text);
-                }
-                Err(TranslateError::Cancelled) => {}
-                Err(e) => {
-                    let _ = app_clone.emit("translation-error", e.to_string());
-                }
+        let image_changed = match &prev_image {
+            Some(prev) => {
+                let score = diff::compute_diff_score(prev, &current);
+                diff::is_changed(score, config.delta_threshold)
             }
-        });
+            None => true,
+        };
+
+        prev_image = Some(current);
+
+        if rect_changed || image_changed {
+            let should_notify = {
+                let mut s = state.lock().await;
+                if !s.is_stale {
+                    s.is_stale = true;
+                    true
+                } else {
+                    false
+                }
+            };
+            if should_notify {
+                let _ = app.emit("capture-stale", ());
+            }
+        }
     }
 }

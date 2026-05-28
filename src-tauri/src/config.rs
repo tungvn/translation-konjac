@@ -16,7 +16,7 @@ impl Default for AppConfig {
         Self {
             gateway_url: String::new(),
             provider: "openai".to_string(),
-            model: "gpt-5.4-nano".to_string(),
+            model: "gpt-4o-mini".to_string(),
             api_key: String::new(),
             target_language: "English".to_string(),
             delta_threshold: 0.05,

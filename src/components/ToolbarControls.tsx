@@ -1,25 +1,28 @@
 interface Props {
-  capturing: boolean;
-  onPause: () => void;
-  onResume: () => void;
+  stale: boolean;
+  loading: boolean;
+  onTranslate: () => void;
   onOpenSettings: () => void;
 }
 
-export default function ToolbarControls({ capturing, onPause, onResume, onOpenSettings }: Props) {
+export default function ToolbarControls({
+  stale,
+  loading,
+  onTranslate,
+  onOpenSettings,
+}: Props) {
   return (
     <div className="toolbar-controls">
       <button
-        className="icon-btn"
-        aria-label={capturing ? "Pause" : "Resume"}
-        onClick={capturing ? onPause : onResume}
+        className={`icon-btn translate-btn${stale ? " stale" : ""}${loading ? " translating" : ""}`}
+        aria-label="Translate"
+        onClick={onTranslate}
+        disabled={loading}
+        title={stale ? "Content changed — click to translate" : "Translate"}
       >
-        {capturing ? "⏸" : "▶"}
+        ↻
       </button>
-      <button
-        className="icon-btn"
-        aria-label="Settings"
-        onClick={onOpenSettings}
-      >
+      <button className="icon-btn" aria-label="Settings" onClick={onOpenSettings}>
         ⚙
       </button>
     </div>

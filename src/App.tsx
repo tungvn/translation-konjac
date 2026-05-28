@@ -19,7 +19,7 @@ export default function App() {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [capturing, setCapturing] = useState(true);
+  const [stale, setStale] = useState(false);
   const [language, setLanguage] = useState("English");
   const [showSettings, setShowSettings] = useState(false);
   const [config, setConfig] = useState<AppConfig | null>(null);
@@ -29,14 +29,17 @@ export default function App() {
       setConfig(c);
       setLanguage(c.target_language);
     });
+    invoke<boolean>("get_stale").then(setStale);
 
     const unlisteners = [
+      listen("capture-stale", () => setStale(true)),
       listen("translation-loading", () => {
         setLoading(true);
         setError(null);
       }),
       listen<string>("translation-updated", (e) => {
         setLoading(false);
+        setStale(false);
         setText(e.payload);
       }),
       listen<string>("translation-error", (e) => {
@@ -50,19 +53,17 @@ export default function App() {
     };
   }, []);
 
+  const handleTranslate = useCallback(() => {
+    setStale(false);
+    setLoading(true);
+    setError(null);
+    invoke("translate_now");
+  }, []);
+
   const handleLanguageChange = useCallback((lang: string) => {
     setLanguage(lang);
     invoke("set_target_language", { language: lang });
-  }, []);
-
-  const handlePause = useCallback(() => {
-    setCapturing(false);
-    invoke("pause_capture");
-  }, []);
-
-  const handleResume = useCallback(() => {
-    setCapturing(true);
-    invoke("resume_capture");
+    setStale(true);
   }, []);
 
   const handleSaveSettings = useCallback((updated: AppConfig) => {
@@ -78,9 +79,9 @@ export default function App() {
       <div className="toolbar" data-tauri-drag-region>
         <LanguagePicker value={language} onChange={handleLanguageChange} />
         <ToolbarControls
-          capturing={capturing}
-          onPause={handlePause}
-          onResume={handleResume}
+          stale={stale}
+          loading={loading}
+          onTranslate={handleTranslate}
           onOpenSettings={() => setShowSettings((v) => !v)}
         />
       </div>
