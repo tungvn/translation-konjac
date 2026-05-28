@@ -7,7 +7,10 @@ pub mod translate;
 use capture::AppState;
 use history::TranslationHistory;
 use std::sync::Arc;
-use tauri::{Emitter, Manager};
+use tauri::{
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    Emitter, Manager,
+};
 use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
 use translate::{TranslateEngine, TranslateError};
@@ -39,6 +42,29 @@ pub fn run() {
             let hist = Arc::new(Mutex::new(TranslationHistory::load(&dir)));
             app.manage(hist);
 
+            let tray = TrayIconBuilder::with_id("main-tray")
+                .icon(tauri::image::Image::from_bytes(include_bytes!(
+                    "../icons/32x32.png"
+                ))?)
+                .tooltip("Konjac")
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        let app = tray.app_handle();
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.show();
+                            let _ = win.set_focus();
+                        }
+                        let _ = tray.set_visible(false);
+                    }
+                })
+                .build(app)?;
+            tray.set_visible(false)?;
+
             #[cfg(target_os = "windows")]
             if let Some(win) = app.get_webview_window("main") {
                 if let Ok(hwnd) = win.hwnd() {
@@ -52,6 +78,15 @@ pub fn run() {
             });
 
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+                if let Some(tray) = window.app_handle().tray_by_id("main-tray") {
+                    let _ = tray.set_visible(true);
+                }
+            }
         })
         .invoke_handler(tauri::generate_handler![
             set_target_language,
