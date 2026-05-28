@@ -4063,6 +4063,7 @@ dependencies = [
  "base64 0.22.1",
  "dirs 5.0.1",
  "image",
+ "objc2",
  "reqwest 0.12.28",
  "serde",
  "serde_json",

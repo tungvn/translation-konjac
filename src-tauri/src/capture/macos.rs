@@ -18,6 +18,20 @@ pub fn request_screen_capture_permission() {
     unsafe { CGRequestScreenCaptureAccess() };
 }
 
+/// Make the window appear on all Spaces/virtual desktops.
+/// `ns_window` is the raw `NSWindow *` pointer from Tauri's `ns_window()`.
+pub fn set_all_spaces(ns_window: *mut std::ffi::c_void) {
+    use objc2::msg_send;
+    use objc2::runtime::AnyObject;
+    // NSWindowCollectionBehaviorCanJoinAllSpaces = 1 << 0
+    const CAN_JOIN_ALL_SPACES: usize = 1;
+    unsafe {
+        let win = ns_window as *mut AnyObject;
+        let current: usize = msg_send![&*win, collectionBehavior];
+        let _: () = msg_send![&*win, setCollectionBehavior: current | CAN_JOIN_ALL_SPACES];
+    }
+}
+
 pub fn capture_below_window(rect: CaptureRect, _window_id: u32) -> Result<DynamicImage, CaptureError> {
     if rect.width == 0 || rect.height == 0 {
         return Err(CaptureError::Platform("zero-dimension rect".to_string()));

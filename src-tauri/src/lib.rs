@@ -15,7 +15,14 @@ pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             #[cfg(target_os = "macos")]
-            capture::macos::request_screen_capture_permission();
+            {
+                capture::macos::request_screen_capture_permission();
+                if let Some(win) = app.get_webview_window("main") {
+                    if let Ok(ns_win) = win.ns_window() {
+                        capture::macos::set_all_spaces(ns_win);
+                    }
+                }
+            }
 
             let dir = app.path().app_data_dir()?;
             let config = config::AppConfig::load_or_default(dir);
