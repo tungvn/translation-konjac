@@ -1,9 +1,11 @@
 pub mod capture;
 pub mod config;
 pub mod diff;
+pub mod history;
 pub mod translate;
 
 use capture::AppState;
+use history::TranslationHistory;
 use std::sync::Arc;
 use tauri::{Emitter, Manager};
 use tokio::sync::Mutex;
@@ -25,7 +27,7 @@ pub fn run() {
             }
 
             let dir = app.path().app_data_dir()?;
-            let config = config::AppConfig::load_or_default(dir);
+            let config = config::AppConfig::load_or_default(dir.clone());
             let state = Arc::new(Mutex::new(AppState {
                 config,
                 is_capturing: true,
@@ -33,6 +35,9 @@ pub fn run() {
                 inflight_cancel: None,
             }));
             app.manage(state.clone());
+
+            let hist = Arc::new(Mutex::new(TranslationHistory::load(&dir)));
+            app.manage(hist);
 
             #[cfg(target_os = "windows")]
             if let Some(win) = app.get_webview_window("main") {
@@ -57,12 +62,16 @@ pub fn run() {
             save_config,
             translate_now,
             get_stale,
+            get_history,
+            delete_history_item,
+            clear_history,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
 type ManagedState = Arc<Mutex<AppState>>;
+type ManagedHistory = Arc<Mutex<TranslationHistory>>;
 
 #[tauri::command]
 async fn get_config(state: tauri::State<'_, ManagedState>) -> Result<config::AppConfig, String> {
@@ -128,6 +137,7 @@ async fn save_config(
 #[tauri::command]
 async fn translate_now(
     state: tauri::State<'_, ManagedState>,
+    history: tauri::State<'_, ManagedHistory>,
     app: tauri::AppHandle,
 ) -> Result<(), String> {
     let config = {
@@ -169,14 +179,48 @@ async fn translate_now(
     let engine = TranslateEngine::new(config.gateway_url, config.model, config.api_key);
     let lang = config.target_language;
     let app_clone = app.clone();
+    let history_arc = history.inner().clone();
 
     tauri::async_runtime::spawn(async move {
         match engine.translate(&image, &lang, token).await {
-            Ok(text) => { let _ = app_clone.emit("translation-updated", text); }
+            Ok(text) => {
+                if let Ok(dir) = app_clone.path().app_data_dir() {
+                    history_arc.lock().await.push(text.clone(), &dir);
+                }
+                let _ = app_clone.emit("translation-updated", text);
+            }
             Err(TranslateError::Cancelled) => {}
             Err(e) => { let _ = app_clone.emit("translation-error", e.to_string()); }
         }
     });
 
+    Ok(())
+}
+
+#[tauri::command]
+async fn get_history(
+    history: tauri::State<'_, ManagedHistory>,
+) -> Result<Vec<history::HistoryEntry>, String> {
+    Ok(history.lock().await.entries.clone())
+}
+
+#[tauri::command]
+async fn delete_history_item(
+    id: u64,
+    history: tauri::State<'_, ManagedHistory>,
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    let dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    history.lock().await.remove(id, &dir);
+    Ok(())
+}
+
+#[tauri::command]
+async fn clear_history(
+    history: tauri::State<'_, ManagedHistory>,
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    let dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    history.lock().await.clear(&dir);
     Ok(())
 }

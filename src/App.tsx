@@ -15,6 +15,12 @@ interface AppConfig {
   delta_threshold: number;
 }
 
+interface HistoryEntry {
+  id: number;
+  text: string;
+  timestamp: number;
+}
+
 export default function App() {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,6 +28,7 @@ export default function App() {
   const [stale, setStale] = useState(false);
   const [language, setLanguage] = useState("English");
   const [showSettings, setShowSettings] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [config, setConfig] = useState<AppConfig | null>(null);
 
   useEffect(() => {
@@ -74,6 +81,16 @@ export default function App() {
     });
   }, []);
 
+  const handleToggleHistory = useCallback(() => {
+    setShowHistory((v) => !v);
+    setShowSettings(false);
+  }, []);
+
+  const handleRestoreHistory = useCallback((entry: HistoryEntry) => {
+    setText(entry.text);
+    setShowHistory(false);
+  }, []);
+
   return (
     <div className="app">
       <div className="toolbar" data-tauri-drag-region>
@@ -81,8 +98,10 @@ export default function App() {
         <ToolbarControls
           stale={stale}
           loading={loading}
+          showHistory={showHistory}
           onTranslate={handleTranslate}
-          onOpenSettings={() => setShowSettings((v) => !v)}
+          onOpenSettings={() => { setShowSettings((v) => !v); setShowHistory(false); }}
+          onToggleHistory={handleToggleHistory}
         />
       </div>
 
@@ -92,8 +111,75 @@ export default function App() {
           onSave={handleSaveSettings}
           onClose={() => setShowSettings(false)}
         />
+      ) : showHistory ? (
+        <HistoryPanel
+          onRestore={handleRestoreHistory}
+          onClose={() => setShowHistory(false)}
+        />
       ) : (
         <TranslationDisplay loading={loading} text={text} error={error} />
+      )}
+    </div>
+  );
+}
+
+function HistoryPanel({
+  onRestore,
+  onClose,
+}: {
+  onRestore: (entry: HistoryEntry) => void;
+  onClose: () => void;
+}) {
+  const [entries, setEntries] = useState<HistoryEntry[]>([]);
+
+  useEffect(() => {
+    invoke<HistoryEntry[]>("get_history").then(setEntries);
+  }, []);
+
+  function handleDelete(id: number) {
+    invoke("delete_history_item", { id }).then(() =>
+      setEntries((prev) => prev.filter((e) => e.id !== id))
+    );
+  }
+
+  function handleClearAll() {
+    invoke("clear_history").then(() => setEntries([]));
+  }
+
+  return (
+    <div className="history-panel">
+      <div className="history-header">
+        <span className="history-title">History</span>
+        {entries.length > 0 && (
+          <button className="history-clear-all" onClick={handleClearAll}>
+            Clear all
+          </button>
+        )}
+      </div>
+      {entries.length === 0 ? (
+        <div className="history-empty">No history yet</div>
+      ) : (
+        <ul className="history-list">
+          {entries.map((entry) => (
+            <li key={entry.id} className="history-item">
+              <button
+                className="history-item-text"
+                onClick={() => onRestore(entry)}
+                title="Restore this translation"
+              >
+                {entry.text.slice(0, 80)}{entry.text.length > 80 ? "…" : ""}
+              </button>
+              <button
+                className="history-item-delete icon-btn"
+                onClick={() => handleDelete(entry.id)}
+                aria-label="Delete"
+                title="Delete"
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

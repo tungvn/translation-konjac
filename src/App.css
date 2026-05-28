@@ -198,6 +198,96 @@ body {
 
 .settings-actions button:hover { background: rgba(255, 255, 255, 0.15); }
 
+.icon-btn.active { color: #fff; background: rgba(255, 255, 255, 0.15); }
+
+.history-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(22, 22, 22, 0.97);
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.history-title {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.history-clear-all {
+  background: none;
+  border: none;
+  color: rgba(255, 100, 100, 0.7);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.history-clear-all:hover { color: #ff6b6b; }
+
+.history-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.history-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+  padding: 4px 0;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  padding: 0 6px 0 10px;
+  gap: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.history-item-text {
+  flex: 1;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: left;
+  cursor: pointer;
+  padding: 6px 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.history-item-text:hover { color: #fff; }
+
+.history-item-delete {
+  flex-shrink: 0;
+  font-size: 16px;
+  opacity: 0;
+  transition: opacity 0.1s;
+  color: rgba(255, 100, 100, 0.8);
+}
+
+.history-item:hover .history-item-delete { opacity: 1; }
+
 @media (prefers-color-scheme: light) {
   .app {
     background: rgba(245, 245, 245, 0.90);
