@@ -1,3 +1,5 @@
+import { getCurrentWindow } from "@tauri-apps/api/window";
+
 interface Props {
   stale: boolean;
   loading: boolean;
@@ -45,6 +47,14 @@ export default function ToolbarControls({
       </button>
       <button className="icon-btn" aria-label="Settings" onClick={onOpenSettings}>
         ⚙
+      </button>
+      <button
+        className="icon-btn close-btn"
+        aria-label="Close"
+        title="Hide to tray"
+        onClick={() => getCurrentWindow().close()}
+      >
+        ×
       </button>
     </div>
   );
