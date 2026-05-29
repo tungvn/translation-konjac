@@ -1,6 +1,6 @@
 [package]
 name = "translation-konjac"
-version = "1.0.2"
+version = "1.0.3"
 description = "Konjac Translation Overlay"
 authors = []
 edition = "2021"
