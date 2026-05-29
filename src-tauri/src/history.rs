@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 const MAX_ENTRIES: usize = 20;
 
@@ -42,12 +42,12 @@ impl TranslationHistory {
         self.save(dir);
     }
 
-    pub fn remove(&mut self, id: u64, dir: &PathBuf) {
+    pub fn remove(&mut self, id: u64, dir: &Path) {
         self.entries.retain(|e| e.id != id);
         self.save(dir);
     }
 
-    pub fn clear(&mut self, dir: &PathBuf) {
+    pub fn clear(&mut self, dir: &Path) {
         self.entries.clear();
         self.save(dir);
     }
