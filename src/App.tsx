@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
+import { check, type Update } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
 import TranslationDisplay from "./components/TranslationDisplay";
 import LanguagePicker from "./components/LanguagePicker";
 import ToolbarControls from "./components/ToolbarControls";
@@ -30,6 +32,12 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [config, setConfig] = useState<AppConfig | null>(null);
+  const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null);
+  const [updating, setUpdating] = useState(false);
+
+  useEffect(() => {
+    check().then((u) => { if (u) setPendingUpdate(u); }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     invoke<AppConfig>("get_config").then((c) => {
@@ -65,6 +73,17 @@ export default function App() {
     setStale(false);
     setError(null);
   }, []);
+
+  const handleUpdate = useCallback(async () => {
+    if (!pendingUpdate || updating) return;
+    setUpdating(true);
+    try {
+      await pendingUpdate.downloadAndInstall();
+      await relaunch();
+    } catch {
+      setUpdating(false);
+    }
+  }, [pendingUpdate, updating]);
 
   const handleTranslate = useCallback(() => {
     setStale(false);
@@ -105,9 +124,12 @@ export default function App() {
           stale={stale}
           loading={loading}
           showHistory={showHistory}
+          updateVersion={pendingUpdate?.version ?? null}
+          updating={updating}
           onTranslate={handleTranslate}
           onOpenSettings={() => { setShowSettings((v) => !v); setShowHistory(false); }}
           onToggleHistory={handleToggleHistory}
+          onUpdate={handleUpdate}
         />
       </div>
 

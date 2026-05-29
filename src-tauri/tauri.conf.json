@@ -1,6 +1,6 @@
 {
   "productName": "Konjac",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "identifier": "com.ordinarist.konjac-translation",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -41,6 +41,14 @@
     ],
     "macOS": {
       "infoPlist": "Info.plist"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IERDNTU5MzRGNjlBNjdFNDgKUldSSWZxWnBUNU5WM0lYNEJMUVJNcExwanZjMzMrNi82WExGcDVDZkltMG96QU9JVS9BcmNtcS8K",
+      "endpoints": [
+        "https://github.com/tungvn/translation-konjac/releases/latest/download/latest.json"
+      ]
     }
   }
 }
