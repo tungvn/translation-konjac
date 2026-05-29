@@ -5,6 +5,7 @@ interface Props {
   text: string;
   error: string | null;
   onClear: () => void;
+  fontSize: number;
 }
 
 function CopyIcon() {
@@ -33,7 +34,7 @@ function ClearIcon() {
   );
 }
 
-export default function TranslationDisplay({ loading, text, error, onClear }: Props) {
+export default function TranslationDisplay({ loading, text, error, onClear, fontSize }: Props) {
   const [copied, setCopied] = useState(false);
 
   function handleCopy() {
@@ -87,7 +88,7 @@ export default function TranslationDisplay({ loading, text, error, onClear }: Pr
           <ClearIcon />
         </button>
       </div>
-      <pre className="translation-text">{text}</pre>
+      <pre className="translation-text" style={{ fontSize }}>{text}</pre>
     </div>
   );
 }

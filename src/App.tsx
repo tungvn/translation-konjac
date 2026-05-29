@@ -15,6 +15,7 @@ interface AppConfig {
   api_key: string;
   target_language: string;
   delta_threshold: number;
+  font_size: number;
 }
 
 interface HistoryEntry {
@@ -29,6 +30,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [stale, setStale] = useState(false);
   const [language, setLanguage] = useState("English");
+  const [fontSize, setFontSize] = useState(13);
   const [showSettings, setShowSettings] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [config, setConfig] = useState<AppConfig | null>(null);
@@ -44,6 +46,7 @@ export default function App() {
     invoke<AppConfig>("get_config").then((c) => {
       setConfig(c);
       setLanguage(c.target_language);
+      setFontSize(c.font_size);
     });
     invoke<boolean>("get_stale").then(setStale);
 
@@ -107,6 +110,14 @@ export default function App() {
     });
   }, []);
 
+  const handleFontSizeChange = useCallback((delta: -1 | 1) => {
+    setFontSize((prev) => {
+      const next = Math.min(20, Math.max(10, prev + delta));
+      invoke("set_font_size", { size: next });
+      return next;
+    });
+  }, []);
+
   const handleToggleHistory = useCallback(() => {
     setShowHistory((v) => !v);
     setShowSettings(false);
@@ -128,6 +139,7 @@ export default function App() {
           onTranslate={handleTranslate}
           onOpenSettings={() => { setShowSettings((v) => !v); setShowHistory(false); }}
           onToggleHistory={handleToggleHistory}
+          onFontSizeChange={handleFontSizeChange}
         />
       </div>
 
@@ -147,7 +159,7 @@ export default function App() {
           onClose={() => setShowHistory(false)}
         />
       ) : (
-        <TranslationDisplay loading={loading} text={text} error={error} onClear={handleClear} />
+        <TranslationDisplay loading={loading} text={text} error={error} onClear={handleClear} fontSize={fontSize} />
       )}
     </div>
   );

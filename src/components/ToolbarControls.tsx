@@ -8,6 +8,7 @@ interface Props {
   onTranslate: () => void;
   onOpenSettings: () => void;
   onToggleHistory: () => void;
+  onFontSizeChange: (delta: -1 | 1) => void;
 }
 
 function HistoryIcon() {
@@ -26,9 +27,26 @@ export default function ToolbarControls({
   onTranslate,
   onOpenSettings,
   onToggleHistory,
+  onFontSizeChange,
 }: Props) {
   return (
     <div className="toolbar-controls">
+      <button
+        className="icon-btn"
+        aria-label="Decrease font size"
+        title="Decrease font size"
+        onClick={() => onFontSizeChange(-1)}
+      >
+        A−
+      </button>
+      <button
+        className="icon-btn"
+        aria-label="Increase font size"
+        title="Increase font size"
+        onClick={() => onFontSizeChange(1)}
+      >
+        A+
+      </button>
       <button
         className={`icon-btn translate-btn${stale ? " stale" : ""}${loading ? " translating" : ""}`}
         aria-label="Translate"
