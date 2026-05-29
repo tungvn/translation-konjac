@@ -45,7 +45,7 @@ export default function ToolbarControls({
       >
         <HistoryIcon />
       </button>
-      <button className="icon-btn" aria-label="Settings" onClick={onOpenSettings}>
+      <button className="icon-btn settings-btn" aria-label="Settings" onClick={onOpenSettings}>
         ⚙
       </button>
       <button
