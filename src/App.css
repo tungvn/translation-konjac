@@ -211,10 +211,36 @@ body {
 
 .settings input[type="range"] { accent-color: #fff; }
 
+.settings-update {
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  margin-top: auto;
+}
+
+.settings-update-checking,
+.settings-update-ok {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.settings-update-install {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #ffd60a;
+  font-size: 11px;
+  text-align: left;
+}
+
+.settings-update-install:disabled {
+  color: rgba(255, 255, 255, 0.45);
+  cursor: not-allowed;
+}
+
 .settings-actions {
   display: flex;
   gap: 8px;
-  margin-top: auto;
 }
 
 .settings-actions button {
@@ -371,4 +397,13 @@ body {
   }
 
   .settings-actions button:hover { background: rgba(0, 0, 0, 0.12); }
+
+  .settings-update-checking,
+  .settings-update-ok {
+    color: rgba(0, 0, 0, 0.4);
+  }
+
+  .settings-update-install {
+    color: #b8860b;
+  }
 }

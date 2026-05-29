@@ -33,10 +33,11 @@ export default function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null);
+  const [updateChecked, setUpdateChecked] = useState(false);
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    check().then((u) => { if (u) setPendingUpdate(u); }).catch(() => {});
+    check().then((u) => { if (u) setPendingUpdate(u); }).catch(() => {}).finally(() => setUpdateChecked(true));
   }, []);
 
   useEffect(() => {
@@ -124,12 +125,9 @@ export default function App() {
           stale={stale}
           loading={loading}
           showHistory={showHistory}
-          updateVersion={pendingUpdate?.version ?? null}
-          updating={updating}
           onTranslate={handleTranslate}
           onOpenSettings={() => { setShowSettings((v) => !v); setShowHistory(false); }}
           onToggleHistory={handleToggleHistory}
-          onUpdate={handleUpdate}
         />
       </div>
 
@@ -138,6 +136,10 @@ export default function App() {
           config={config}
           onSave={handleSaveSettings}
           onClose={() => setShowSettings(false)}
+          updateChecked={updateChecked}
+          updateVersion={pendingUpdate?.version ?? null}
+          updating={updating}
+          onUpdate={handleUpdate}
         />
       ) : showHistory ? (
         <HistoryPanel
@@ -217,10 +219,18 @@ function SettingsPopover({
   config,
   onSave,
   onClose,
+  updateChecked,
+  updateVersion,
+  updating,
+  onUpdate,
 }: {
   config: AppConfig;
   onSave: (c: AppConfig) => void;
   onClose: () => void;
+  updateChecked: boolean;
+  updateVersion: string | null;
+  updating: boolean;
+  onUpdate: () => void;
 }) {
   const [draft, setDraft] = useState(config);
 
@@ -261,6 +271,21 @@ function SettingsPopover({
           }
         />
       </label>
+      <div className="settings-update">
+        {!updateChecked ? (
+          <span className="settings-update-checking">Checking for updates…</span>
+        ) : updateVersion ? (
+          <button
+            className="settings-update-install"
+            onClick={onUpdate}
+            disabled={updating}
+          >
+            {updating ? "Installing…" : `Update available: v${updateVersion} — Install`}
+          </button>
+        ) : (
+          <span className="settings-update-ok">You're on the latest version</span>
+        )}
+      </div>
       <div className="settings-actions">
         <button onClick={() => onSave(draft)}>Save</button>
         <button onClick={onClose}>Cancel</button>
