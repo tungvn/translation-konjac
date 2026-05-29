@@ -44,8 +44,9 @@ pub fn run() {
 
             let tray = TrayIconBuilder::with_id("main-tray")
                 .icon(tauri::image::Image::from_bytes(include_bytes!(
-                    "../icons/32x32.png"
+                    "../icons/tray.png"
                 ))?)
+                .icon_as_template(true)
                 .tooltip("Konjac")
                 .on_tray_icon_event(|tray, event| {
                     if let TrayIconEvent::Click {
