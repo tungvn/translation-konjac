@@ -13,12 +13,9 @@ pub fn capture_below_window(rect: CaptureRect, _window_id: u32) -> Result<Dynami
         .capture_area(rect.x, rect.y, rect.width, rect.height)
         .map_err(|e| CaptureError::Platform(e.to_string()))?;
 
-    let rgba = image::RgbaImage::from_raw(
-        capture.width(),
-        capture.height(),
-        capture.rgba().to_vec(),
-    )
-    .ok_or(CaptureError::ConversionError)?;
+    let (w, h) = (capture.width(), capture.height());
+    let rgba = image::RgbaImage::from_raw(w, h, capture.into_raw())
+        .ok_or(CaptureError::ConversionError)?;
 
     Ok(DynamicImage::ImageRgba8(rgba))
 }
