@@ -60,6 +60,12 @@ export default function App() {
     };
   }, []);
 
+  const handleClear = useCallback(() => {
+    setText("");
+    setStale(false);
+    setError(null);
+  }, []);
+
   const handleTranslate = useCallback(() => {
     setStale(false);
     setLoading(true);
@@ -117,7 +123,7 @@ export default function App() {
           onClose={() => setShowHistory(false)}
         />
       ) : (
-        <TranslationDisplay loading={loading} text={text} error={error} />
+        <TranslationDisplay loading={loading} text={text} error={error} onClear={handleClear} />
       )}
     </div>
   );
