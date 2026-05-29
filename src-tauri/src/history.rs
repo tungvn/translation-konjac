@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::Path;
 
 const MAX_ENTRIES: usize = 20;
 
@@ -17,7 +17,7 @@ pub struct TranslationHistory {
 }
 
 impl TranslationHistory {
-    pub fn load(dir: &PathBuf) -> Self {
+    pub fn load(dir: &Path) -> Self {
         let path = dir.join("history.json");
         std::fs::read_to_string(&path)
             .ok()
@@ -25,13 +25,13 @@ impl TranslationHistory {
             .unwrap_or_default()
     }
 
-    fn save(&self, dir: &PathBuf) {
+    fn save(&self, dir: &Path) {
         if let Ok(json) = serde_json::to_string(self) {
             let _ = std::fs::write(dir.join("history.json"), json);
         }
     }
 
-    pub fn push(&mut self, text: String, dir: &PathBuf) {
+    pub fn push(&mut self, text: String, dir: &Path) {
         let timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
@@ -42,12 +42,12 @@ impl TranslationHistory {
         self.save(dir);
     }
 
-    pub fn remove(&mut self, id: u64, dir: &PathBuf) {
+    pub fn remove(&mut self, id: u64, dir: &Path) {
         self.entries.retain(|e| e.id != id);
         self.save(dir);
     }
 
-    pub fn clear(&mut self, dir: &PathBuf) {
+    pub fn clear(&mut self, dir: &Path) {
         self.entries.clear();
         self.save(dir);
     }

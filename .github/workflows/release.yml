@@ -6,7 +6,41 @@ on:
       - 'v*'
 
 jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install
+
+      - run: pnpm exec tsc --noEmit
+
+  rust-check:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: cargo check --manifest-path src-tauri/Cargo.toml
+
+      - run: cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
+
   publish-tauri:
+    needs: [typecheck, rust-check]
     permissions:
       contents: write
     strategy:
