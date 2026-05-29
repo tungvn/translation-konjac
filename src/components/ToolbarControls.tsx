@@ -50,11 +50,13 @@ export default function ToolbarControls({
       </button>
       <button
         className="icon-btn close-btn"
-        aria-label="Close"
+        aria-label="Hide to tray"
         title="Hide to tray"
         onClick={() => getCurrentWindow().close()}
       >
-        ×
+        <svg width="12" height="12" viewBox="0 0 12 2" fill="currentColor">
+          <rect x="0" y="0" width="12" height="2" rx="1" />
+        </svg>
       </button>
     </div>
   );
