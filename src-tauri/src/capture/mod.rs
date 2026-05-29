@@ -111,7 +111,7 @@ pub async fn run_capture_loop(app: tauri::AppHandle, state: Arc<Mutex<AppState>>
         };
 
         let rect_key = (pos.x, pos.y, size.width, size.height);
-        let rect_changed = prev_rect.map_or(true, |r| r != rect_key);
+        let rect_changed = prev_rect != Some(rect_key);
         prev_rect = Some(rect_key);
 
         let toolbar_pt = 32_u32;
