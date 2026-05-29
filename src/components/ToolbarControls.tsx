@@ -1,4 +1,5 @@
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window"; // used for hide()
 
 interface Props {
   stale: boolean;
@@ -11,7 +12,7 @@ interface Props {
 
 function HistoryIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="8" cy="8" r="6" />
       <polyline points="8,4.5 8,8 10.5,9.5" />
     </svg>
@@ -52,7 +53,7 @@ export default function ToolbarControls({
         className="icon-btn close-btn"
         aria-label="Hide to tray"
         title="Hide to tray"
-        onClick={() => getCurrentWindow().close()}
+        onClick={() => { getCurrentWindow().hide(); invoke("show_tray"); }}
       >
         <svg width="12" height="12" viewBox="0 0 12 2" fill="currentColor">
           <rect x="0" y="0" width="12" height="2" rx="1" />

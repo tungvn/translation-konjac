@@ -101,6 +101,7 @@ pub fn run() {
             get_history,
             delete_history_item,
             clear_history,
+            show_tray,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -259,4 +260,11 @@ async fn clear_history(
     let dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     history.lock().await.clear(&dir);
     Ok(())
+}
+
+#[tauri::command]
+fn show_tray(app: tauri::AppHandle) {
+    if let Some(tray) = app.tray_by_id("main-tray") {
+        let _ = tray.set_visible(true);
+    }
 }
