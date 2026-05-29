@@ -199,7 +199,7 @@ body {
 .settings-actions button:hover { background: rgba(255, 255, 255, 0.15); }
 
 .icon-btn.active { color: #fff; background: rgba(255, 255, 255, 0.15); }
-.settings-btn { font-size: 20px; }
+.settings-btn { font-size: 20px; transform: translateY(-1px); }
 .close-btn:hover { background: rgba(220, 50, 50, 0.7) !important; color: #fff !important; }
 
 .history-panel {

@@ -11,7 +11,7 @@ interface Props {
 
 function HistoryIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
       <circle cx="8" cy="8" r="6" />
       <polyline points="8,4.5 8,8 10.5,9.5" />
     </svg>
