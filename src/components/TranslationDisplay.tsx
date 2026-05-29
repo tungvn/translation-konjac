@@ -4,6 +4,7 @@ interface Props {
   loading: boolean;
   text: string;
   error: string | null;
+  onClear: () => void;
 }
 
 function CopyIcon() {
@@ -23,7 +24,16 @@ function CheckIcon() {
   );
 }
 
-export default function TranslationDisplay({ loading, text, error }: Props) {
+function ClearIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="3" y1="3" x2="13" y2="13" />
+      <line x1="13" y1="3" x2="3" y2="13" />
+    </svg>
+  );
+}
+
+export default function TranslationDisplay({ loading, text, error, onClear }: Props) {
   const [copied, setCopied] = useState(false);
 
   function handleCopy() {
@@ -59,14 +69,24 @@ export default function TranslationDisplay({ loading, text, error }: Props) {
 
   return (
     <div className="translation-body translation-body--has-text">
-      <button
-        className={`copy-btn icon-btn${copied ? " copy-btn--done" : ""}`}
-        onClick={handleCopy}
-        title={copied ? "Copied!" : "Copy"}
-        aria-label="Copy translation"
-      >
-        {copied ? <CheckIcon /> : <CopyIcon />}
-      </button>
+      <div className="text-actions">
+        <button
+          className={`copy-btn icon-btn${copied ? " copy-btn--done" : ""}`}
+          onClick={handleCopy}
+          title={copied ? "Copied!" : "Copy"}
+          aria-label="Copy translation"
+        >
+          {copied ? <CheckIcon /> : <CopyIcon />}
+        </button>
+        <button
+          className="clear-btn icon-btn"
+          onClick={onClear}
+          title="Clear"
+          aria-label="Clear translation"
+        >
+          <ClearIcon />
+        </button>
+      </div>
       <pre className="translation-text">{text}</pre>
     </div>
   );
