@@ -94,6 +94,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             set_target_language,
             set_delta_threshold,
+            set_font_size,
             pause_capture,
             resume_capture,
             get_config,
@@ -138,6 +139,19 @@ async fn set_delta_threshold(
 ) -> Result<(), String> {
     state.lock().await.config.delta_threshold = threshold;
     Ok(())
+}
+
+#[tauri::command]
+async fn set_font_size(
+    size: u8,
+    state: tauri::State<'_, ManagedState>,
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    let clamped = size.clamp(10, 20);
+    let dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let mut s = state.lock().await;
+    s.config.font_size = clamped;
+    s.config.save(dir).map_err(|e| e.to_string())
 }
 
 #[tauri::command]

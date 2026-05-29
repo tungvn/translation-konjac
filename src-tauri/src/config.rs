@@ -13,6 +13,7 @@ pub struct AppConfig {
     pub api_key: String,
     pub target_language: String,
     pub delta_threshold: f32,
+    pub font_size: u8,
 }
 
 // Persisted to disk — no sensitive fields.
@@ -28,12 +29,15 @@ struct StoredConfig {
     target_language: String,
     #[serde(default = "default_threshold")]
     delta_threshold: f32,
+    #[serde(default = "default_font_size")]
+    font_size: u8,
 }
 
 fn default_provider() -> String { "openai".to_string() }
 fn default_model() -> String { "gpt-5.4-mini".to_string() }
 fn default_language() -> String { "English".to_string() }
 fn default_threshold() -> f32 { 0.05 }
+fn default_font_size() -> u8 { 13 }
 
 impl Default for AppConfig {
     fn default() -> Self {
@@ -44,6 +48,7 @@ impl Default for AppConfig {
             api_key: String::new(),
             target_language: default_language(),
             delta_threshold: default_threshold(),
+            font_size: default_font_size(),
         }
     }
 }
@@ -60,6 +65,7 @@ impl AppConfig {
                 model: default_model(),
                 target_language: default_language(),
                 delta_threshold: default_threshold(),
+                font_size: default_font_size(),
             });
 
         let api_key = Entry::new(KEYRING_SERVICE, KEYRING_USER)
@@ -74,6 +80,7 @@ impl AppConfig {
             api_key,
             target_language: stored.target_language,
             delta_threshold: stored.delta_threshold,
+            font_size: stored.font_size,
         }
     }
 
@@ -85,6 +92,7 @@ impl AppConfig {
             model: self.model.clone(),
             target_language: self.target_language.clone(),
             delta_threshold: self.delta_threshold,
+            font_size: self.font_size,
         };
         std::fs::write(app_data_dir.join("config.toml"), toml::to_string(&stored)?)?;
 
